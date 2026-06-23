@@ -1,0 +1,6 @@
+{
+  "name": "EduTogo",
+  "description": "Plateforme éducative togolaise pour la préparation et la réussite du Baccalauréat.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
