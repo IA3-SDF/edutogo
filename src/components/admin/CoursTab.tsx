@@ -1,12 +1,12 @@
-﻿import React from "react";
-import {
-  Plus,
-  BookOpen,
-  Edit3,
-  Trash,
-  ChevronUp,
-  ChevronDown,
+﻿import {
+    BookOpen,
+    ChevronDown,
+    ChevronUp,
+    Edit3,
+    Plus,
+    Trash,
 } from "lucide-react";
+import React from "react";
 import { Chapter, Course } from "../../../types";
 import { ModalState } from "./adminTypes";
 import { EditableField } from "./EditableField";
@@ -54,7 +54,7 @@ export const CoursTab: React.FC<CoursTabProps> = ({
             onClick={() =>
               setModal({
                 type: "addCourse",
-                draftTitle: `Cours — ${currentChapter.title}`,
+                draftTitle:"",
                 draftContent: "",
               })
             }
@@ -113,7 +113,7 @@ export const CoursTab: React.FC<CoursTabProps> = ({
                       <button
                         onClick={() =>
                           setModal({
-                            type: "addCourse",
+                            type: "editCourseContent",
                             draftId: course.id,
                             draftTitle: course.title,
                             draftContent: course.content,
@@ -401,7 +401,7 @@ export const CoursTab: React.FC<CoursTabProps> = ({
                               <button
                                 onClick={() =>
                                   setModal({
-                                    type: "addCourse",
+                                    type: "editCourseContent",
                                     draftId: course.id,
                                     draftTitle: course.title,
                                     draftContent: course.content,

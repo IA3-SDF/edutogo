@@ -1,17 +1,18 @@
 import {
-    Asset,
-    Chapter,
-    Course,
-    CourseSection,
-    DatabaseState,
-    Evaluation,
-    Exercise,
-    FavoriteRow,
-    Level,
-    QuizQuestion,
-    Subject,
-    UserFavorite,
-    UserProfile,
+  Asset,
+  Chapter,
+  Course,
+  CourseSection,
+  DatabaseState,
+  Evaluation,
+  Exercise,
+  FavoriteRow,
+  Level,
+  QuizQuestion,
+  Subject,
+  UserFavorite,
+  UserNotification,
+  UserProfile,
 } from "../types";
 import { getSupabaseClient } from "./supabase";
 
@@ -330,6 +331,7 @@ export async function fetchUserProfile(userId: string): Promise<UserProfile | nu
     }
 
     return {
+      id: data.id,
       fullName: data.full_name,
       role: data.role as "student" | "admin",
       classLevel: data.class_level,
@@ -343,6 +345,50 @@ export async function fetchUserProfile(userId: string): Promise<UserProfile | nu
   } catch (err) {
     console.error("[EduTogo] Erreur lors du chargement du profil :", err);
     return null;
+  }
+}
+
+export async function fetchUserNotifications(userId: string): Promise<UserNotification[]> {
+  const supabase = requireSupabase();
+  if (!supabase) return [];
+
+  try {
+    const { data, error } = await supabase
+      .from("notifications")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    if (error) throw error;
+    return (data || []).map((item: any) => ({
+      id: Number(item.id),
+      userId: item.user_id,
+      title: item.title,
+      message: item.message,
+      isRead: item.is_read,
+      createdAt: item.created_at,
+    }));
+  } catch (err) {
+    console.error("[EduTogo] Erreur lors du chargement des notifications :", err);
+    return [];
+  }
+}
+
+export async function markNotificationRead(notificationId: number): Promise<boolean> {
+  const supabase = requireSupabase();
+  if (!supabase) return false;
+
+  try {
+    const { error } = await supabase
+      .from("notifications")
+      .update({ is_read: true })
+      .eq("id", notificationId);
+    if (error) throw error;
+    return true;
+  } catch (err) {
+    console.error("[EduTogo] Erreur lors du marquage de notification comme lue :", err);
+    return false;
   }
 }
 

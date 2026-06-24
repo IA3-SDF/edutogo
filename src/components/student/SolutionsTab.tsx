@@ -1,7 +1,7 @@
-﻿import React from "react";
-import { Bookmark } from "lucide-react";
+﻿import { Bookmark } from "lucide-react";
+import React from "react";
 import { Exercise } from "../../../types";
-import { MathRenderer } from "../MathRenderer";
+import { MathRenderer } from "../admin/MathRenderer";
 
 interface SolutionsTabProps {
   exercises: Exercise[];

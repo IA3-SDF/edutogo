@@ -1,15 +1,40 @@
 "use client";
 
-import React, { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { MobileLayout } from "../../components/mobile/MobileLayout";
+import { StudentDashboard } from "../../components/student/StudentDashboard";
 import { useApp } from "../providers";
-import { StudentDashboard } from "../../components/StudentDashboard";
 
 function StudentDashboardWithParams() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const chapterId = searchParams.get("chapterId") || undefined;
   const { db, selectedLevelId, isDarkMode } = useApp();
+  const [isMobile, setIsMobile] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const query = "(max-width: 1023px)";
+    const media = window.matchMedia(query);
+    const update = () => setIsMobile(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  if (isMobile === null) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
+        <div className="text-gray-500 dark:text-gray-400 animate-pulse font-medium">
+          Chargement du tableau de bord...
+        </div>
+      </div>
+    );
+  }
+
+  if (isMobile) {
+    return <MobileLayout initialChapterId={chapterId} />;
+  }
 
   return (
     <StudentDashboard

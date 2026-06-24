@@ -1,21 +1,21 @@
 "use client";
 
+import {
+    AlertTriangle,
+    Film,
+    Maximize2,
+    Music,
+    RotateCw,
+    X,
+} from "lucide-react";
 import React, {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
+    useCallback,
+    useEffect,
+    useRef,
+    useState,
 } from "react";
 import { createPortal } from "react-dom";
-import {
-  Music,
-  Film,
-  Maximize2,
-  X,
-  AlertTriangle,
-  RotateCw,
-} from "lucide-react";
-import { getSignedUrl, bucketFromStoragePath } from "../../lib/supabaseFunctions";
+import { bucketFromStoragePath, getSignedUrl } from "../../../lib/supabaseFunctions";
 
 export type CourseMediaType = "image" | "audio" | "video";
 

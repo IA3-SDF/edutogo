@@ -1,27 +1,22 @@
-import React from "react";
 import {
-  Calculator,
-  BookOpen,
-  Clock,
-  Users,
   ArrowRight,
-  CheckCircle,
-  Smartphone,
-  Map as MapIcon,
-  GraduationCap,
-  ChevronRight,
-  Award,
-  HelpCircle,
-  Sparkles,
-  BookMarked,
-  Layers,
-  Send,
-  Check,
   Atom,
+  Award,
+  BookMarked,
+  BookOpen,
+  Calculator,
+  CheckCircle,
+  ChevronRight,
   FlaskConical,
+  GraduationCap,
+  Map as MapIcon,
+  Smartphone,
+  Sparkles,
+  Users
 } from "lucide-react";
-import { Level, Subject } from "../../types";
-import { fetchPopularChapters } from "../../lib/supabaseFunctions";
+import React from "react";
+import { fetchPopularChapters } from "../../../lib/supabaseFunctions";
+import { Level, Subject } from "../../../types";
 
 interface LandingPageProps {
   levels: Level[];

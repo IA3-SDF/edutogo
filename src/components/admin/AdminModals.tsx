@@ -3,9 +3,9 @@ import React, { useRef } from "react";
 import { uploadStorageFile } from "../../../lib/supabaseFunctions";
 import { parseCourseContent } from "../../../lib/utils";
 import { DatabaseState, Evaluation, Exercise, QuizQuestion } from "../../../types";
-import { MathRenderer } from "../MathRenderer";
 import { ModalState } from "./adminTypes";
 import { KatexEditorField } from "./KatexEditorField";
+import { MathRenderer } from "./MathRenderer";
 
 interface AdminModalsProps {
   modal: ModalState | null;
@@ -326,7 +326,8 @@ export const AdminModals: React.FC<AdminModalsProps> = ({
                         value={modal.draftTitle || ""}
                         onChange={(e) => setModal({ ...modal, draftTitle: e.target.value })}
                         className="input font-bold"
-                        placeholder="Ex : Cours sur les suites arithmétiques"
+                        placeholder="Ex : Chapitre 1 — Les suites numériques"
+                        autoFocus
                       />
                     </div>
                     <p className="text-[10px] text-(--color-text-faint) leading-relaxed">
@@ -337,11 +338,11 @@ export const AdminModals: React.FC<AdminModalsProps> = ({
                         Annuler
                       </button>
                       <button
-                        onClick={() => handleSaveCourse(modal.draftTitle || "Nouvelle leçon", "", modal.draftId)}
+                        onClick={() => handleSaveCourse(modal.draftTitle || "Nouvelle leçon", "", undefined)}
                         disabled={!modal.draftTitle?.trim()}
                         className="btn btn-primary px-4 py-2 text-xs font-bold disabled:opacity-45"
                       >
-                        {modal.draftId ? "Enregistrer" : "Créer le cours"}
+                        Créer le cours
                       </button>
                     </div>
                   </>

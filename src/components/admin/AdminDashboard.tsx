@@ -1,36 +1,36 @@
 import {
-    AlertCircle,
-    BookOpen,
-    FileCheck,
-    FileEdit,
-    Layout,
-    HelpCircle as QuizIcon
+  AlertCircle,
+  BookOpen,
+  FileCheck,
+  FileEdit,
+  Layout,
+  HelpCircle as QuizIcon
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
-import { deleteChapterMediaAsset, fetchDatabaseState, syncChapterMedia, syncCourse } from "../../lib/supabaseFunctions";
+import { deleteChapterMediaAsset, fetchDatabaseState, syncChapterMedia, syncCourse } from "../../../lib/supabaseFunctions";
 import {
-    Asset,
-    Chapter,
-    Course,
-    DatabaseState,
-    Evaluation,
-    Exercise,
-    Level,
-    QuizQuestion,
-    Subject,
-} from "../../types";
+  Asset,
+  Chapter,
+  Course,
+  DatabaseState,
+  Evaluation,
+  Exercise,
+  Level,
+  QuizQuestion,
+  Subject,
+} from "../../../types";
 
-import { AdminModals } from "./admin/AdminModals";
-import { AdminSidebar } from "./admin/AdminSidebar";
-import { ModalState, PriorityItems } from "./admin/adminTypes";
-import { AdminWorkspaceHeader } from "./admin/AdminWorkspaceHeader";
-import { CoursTab } from "./admin/CoursTab";
-import { EditableField } from "./admin/EditableField";
-import { EvaluationsTab } from "./admin/EvaluationsTab";
-import { ExercicesTab } from "./admin/ExercicesTab";
-import { MediaAssetUploader } from "./admin/MediaAssetUploader";
-import { OverviewTab } from "./admin/OverviewTab";
-import { QcmTab } from "./admin/QcmTab";
+import { AdminModals } from "./AdminModals";
+import { AdminSidebar } from "./AdminSidebar";
+import { ModalState, PriorityItems } from "./adminTypes";
+import { AdminWorkspaceHeader } from "./AdminWorkspaceHeader";
+import { CoursTab } from "./CoursTab";
+import { EditableField } from "./EditableField";
+import { EvaluationsTab } from "./EvaluationsTab";
+import { ExercicesTab } from "./ExercicesTab";
+import { MediaAssetUploader } from "./MediaAssetUploader";
+import { OverviewTab } from "./OverviewTab";
+import { QcmTab } from "./QcmTab";
 
 interface AdminDashboardProps {
   db: DatabaseState;
@@ -466,41 +466,70 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   /* ---- Handlers: Courses ---- */
   const handleSaveCourse = async (
-    title: string,
-    content: string,
-    courseId?: string,
-  ) => {
-    const trimmedTitle = title.trim();
-    const existing = courseId
-      ? db.courses.find((c) => c.id === courseId) || null
-      : db.courses.find((c) => c.chapterId === selectedChapterId) || null;
-
-    const courseObj: Course = {
-      id: courseId || (existing ? existing.id : undefined) as any,
+  title: string,
+  content: string,
+  courseId?: string,
+) => {
+  const trimmedTitle = title.trim();
+  
+  // ✅ CRÉATION : aucun courseId fourni → on construit sans id
+  if (!courseId) {
+    const newCourse: Course = {
+      id: undefined as any,
       chapterId: selectedChapterId,
       title: trimmedTitle,
-      content,
-      createdAt: existing?.createdAt || new Date().toISOString(),
-      sections: existing?.sections ? [...existing.sections] : undefined,
-    } as Course;
+      content: content || "",
+      createdAt: new Date().toISOString(),
+      sections: [],
+    };
 
     try {
-      const ok = await syncCourse(courseObj);
+      const ok = await syncCourse(newCourse);
       if (!ok) throw new Error("sync failed");
 
       const fresh = await fetchDatabaseState();
       onUpdateDb(fresh);
 
-      if (courseObj.id) setSelectedCourseId(String(courseObj.id));
+      // Après rechargement, sélectionner le nouveau cours
+      // (son id a été assigné par Supabase dans syncCourse)
+      if (newCourse.id) setSelectedCourseId(String(newCourse.id));
 
       setModal(null);
-      showToast("Cours synchronisé avec Supabase.");
+      showToast("Nouveau cours créé avec succès.");
     } catch (err) {
-      console.error("Erreur sauvegarde cours:", err);
-      showToast("Échec de la sauvegarde du cours vers Supabase.");
+      console.error("Erreur création cours:", err);
+      showToast("Échec de la création du cours.");
     }
+    return; // ← IMPORTANT : on sort ici
+  }
+
+  // ✅ MISE À JOUR : courseId fourni → on met à jour le cours existant
+  const existing = db.courses.find((c) => c.id === courseId) || null;
+
+  const courseObj: Course = {
+    id: courseId as any,
+    chapterId: selectedChapterId,
+    title: trimmedTitle,
+    content,
+    createdAt: existing?.createdAt || new Date().toISOString(),
+    sections: existing?.sections ? [...existing.sections] : undefined,
   };
 
+  try {
+    const ok = await syncCourse(courseObj);
+    if (!ok) throw new Error("sync failed");
+
+    const fresh = await fetchDatabaseState();
+    onUpdateDb(fresh);
+
+    setSelectedCourseId(String(courseId));
+    setModal(null);
+    showToast("Cours mis à jour avec succès.");
+  } catch (err) {
+    console.error("Erreur mise à jour cours:", err);
+    showToast("Échec de la mise à jour du cours.");
+  }
+};
   const handleSaveSection = async (
     sectId: string | undefined,
     title: string,

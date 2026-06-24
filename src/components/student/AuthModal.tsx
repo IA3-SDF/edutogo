@@ -1,21 +1,21 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "motion/react";
 import {
-  X,
-  Mail,
-  Lock,
-  User,
-  GraduationCap,
-  AlertCircle,
-  CheckCircle,
-  ArrowRight,
-  Eye,
-  EyeOff,
+    AlertCircle,
+    ArrowRight,
+    CheckCircle,
+    Eye,
+    EyeOff,
+    GraduationCap,
+    Lock,
+    Mail,
+    User,
+    X,
 } from "lucide-react";
-import { getSupabaseClient } from "../../lib/supabase";
+import { AnimatePresence, motion } from "motion/react";
+import { useRouter } from "next/navigation";
+import React, { useState } from "react";
+import { getSupabaseClient } from "../../../lib/supabase";
 
 interface AuthModalProps {
   isOpen: boolean;

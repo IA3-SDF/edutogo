@@ -636,3 +636,10 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+
+@keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.animate-slide-up { animation: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+.safe-area-pb { padding-bottom: env(safe-area-inset-bottom, 0px); }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }

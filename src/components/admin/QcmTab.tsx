@@ -1,8 +1,8 @@
-﻿import React from "react";
-import { Edit3, Trash, Check } from "lucide-react";
+﻿import { Check, Edit3, Trash } from "lucide-react";
+import React from "react";
 import { DatabaseState } from "../../../types";
 import { ModalState } from "./adminTypes";
-import { MathRenderer } from "../MathRenderer";
+import { MathRenderer } from "./MathRenderer";
 
 interface QcmTabProps {
   db: DatabaseState;

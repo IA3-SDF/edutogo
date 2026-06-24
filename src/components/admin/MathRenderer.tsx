@@ -409,3 +409,85 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
     </div>
   );
 };
+
+
+/* 
+
+**Exercice de Chimie Organique**
+*Hydrocarbures & Acides Aminés — Étude comparée*
+
+---
+
+## Partie A — Les Alcanes
+
+Les alcanes sont des hydrocarbures saturés de formule générale $\text{C}_n\text{H}_{2n+2}$.
+
+**1.** La combustion complète du butane $\text{C}_4\text{H}_{10}$ libère de l'eau et du dioxyde de carbone :
+
+$$\text{C}_4\text{H}_{10} + \frac{13}{2}\ \text{O}_2 \longrightarrow 4\ \text{CO}_2 + 5\ \text{H}_2\text{O}$$
+
+L'enthalpie standard de cette réaction vaut $\Delta H^\circ = -2877\ \text{kJ/mol}$.
+
+**2.** La chloration radicalaire du méthane $\text{CH}_4$ suit un mécanisme en chaîne :
+
+— Amorçage :
+$$\text{Cl}_2 \xrightarrow{h\nu} 2\ \text{Cl}^\bullet$$
+
+— Propagation :
+$$\text{Cl}^\bullet + \text{CH}_4 \longrightarrow \text{CH}_3^\bullet + \text{HCl}$$
+$$\text{CH}_3^\bullet + \text{Cl}_2 \longrightarrow \text{CH}_3\text{Cl} + \text{Cl}^\bullet$$
+
+— Terminaison :
+$$\text{CH}_3^\bullet + \text{Cl}^\bullet \longrightarrow \text{CH}_3\text{Cl}$$
+
+**3.** Parmi les alcanes suivants, classer par ordre croissant de température d'ébullition :
+$\text{CH}_4$, $\text{C}_2\text{H}_6$, $\text{C}_3\text{H}_8$, $\text{C}_4\text{H}_{10}$
+
+---
+
+## Partie B — Acides Aminés & Peptides
+
+Un acide aminé possède la structure générale :
+
+$$\text{H}_2\text{N} - \text{CH}(\text{R}) - \text{COOH}$$
+
+où $\text{R}$ est la chaîne latérale.
+
+**4.** La glycine ($\text{R} = \text{H}$) et l'alanine ($\text{R} = \text{CH}_3$) réagissent par liaison peptidique :
+
+$$\text{H}_2\text{N}-\text{CH}_2-\text{COOH} + \text{H}_2\text{N}-\text{CH}(\text{CH}_3)-\text{COOH}$$
+$$\longrightarrow \text{H}_2\text{N}-\text{CH}_2-\text{CO}-\text{NH}-\text{CH}(\text{CH}_3)-\text{COOH} + \text{H}_2\text{O}$$
+
+**5.** En solution aqueuse, la glycine existe sous forme **zwitterionique** à pH = pHi :
+
+$$\text{H}_2\text{N}-\text{CH}_2-\text{COOH} \rightleftharpoons\ ^+\text{H}_3\text{N}-\text{CH}_2-\text{COO}^-$$
+
+Le point isoélectrique de la glycine est :
+
+$$\text{pHi} = \frac{\text{pKa}_1 + \text{pKa}_2}{2} = \frac{2{,}34 + 9{,}60}{2} = 5{,}97$$
+
+---
+
+## Partie C — Cinétique de la Réaction d'Estérification
+
+L'acide acétique $\text{CH}_3\text{COOH}$ réagit avec l'éthanol $\text{C}_2\text{H}_5\text{OH}$ :
+
+$$\text{CH}_3\text{COOH} + \text{C}_2\text{H}_5\text{OH} \rightleftharpoons \text{CH}_3\text{COOC}_2\text{H}_5 + \text{H}_2\text{O}$$
+
+**6.** La loi de vitesse de cette réaction est :
+
+$$v = k \cdot [\text{CH}_3\text{COOH}][\text{C}_2\text{H}_5\text{OH}]$$
+
+**7.** La constante d'équilibre vaut :
+
+$$K_{eq} = \frac{[\text{CH}_3\text{COOC}_2\text{H}_5][\text{H}_2\text{O}]}{[\text{CH}_3\text{COOH}][\text{C}_2\text{H}_5\text{OH}]} \approx 4$$
+
+**8.** L'énergie d'activation de la réaction catalysée par $\text{H}^+$ vaut $E_a = 55\ \text{kJ/mol}$. En utilisant la loi d'Arrhenius :
+
+$$k(T) = A \cdot e^{-E_a/RT}$$
+
+Calculer le rapport $\dfrac{k(60°C)}{k(25°C)}$ et conclure sur l'effet de la température.
+
+
+
+*/

@@ -1,10 +1,10 @@
-﻿import { BookOpenText, ChevronLeft, ChevronRight } from "lucide-react";
+﻿import { BookOpenText, ChevronLeft, ChevronRight, Heart } from "lucide-react";
 import React from "react";
 import { parseCourseContent } from "../../../lib/utils";
 import { Course, Exercise } from "../../../types";
-import { DynamicExerciseCanvas } from "../DynamicExerciseCanvas";
-import { MathRenderer } from "../MathRenderer";
-import { MediaCoursRender, CourseMediaType } from "../MediaCoursRender";
+import { MathRenderer } from "../admin/MathRenderer";
+import { DynamicExerciseCanvas } from "./DynamicExerciseCanvas";
+import { CourseMediaType, MediaCoursRender } from "./MediaCoursRender";
 
 interface CoursTabProps {
   chapterCourses: Course[];
@@ -14,24 +14,18 @@ interface CoursTabProps {
   onSectionChange: (index: number) => void;
   exercises: Exercise[];
   chapterExercises: Exercise[];
+  favoriteCourseIds?: Set<string>;
+  onToggleFavorite?: (courseId: string) => Promise<void>;
 }
 
-/**
- * Un fragment de contenu textuel découpé en sous-segments :
- * du texte brut (à passer à MathRenderer) ou un média
- * (à passer à MediaCoursRender), dans l'ordre d'apparition.
- */
 type ContentChunk =
   | { kind: "text"; value: string }
   | { kind: "media"; url: string; mediaType: CourseMediaType };
 
-// Capture [[media:URL:TYPE]] — l'URL peut contenir des ":" (ex: https://...),
-// le quantificateur paresseux s'arrête au premier ":image]]" / ":audio]]" / ":video]]" valide.
 const MEDIA_TAG_REGEX = /\[\[media:(.+?):(image|audio|video)\]\]/g;
 
 function splitMediaTags(raw: string): ContentChunk[] {
   if (!raw) return [];
-
   const chunks: ContentChunk[] = [];
   let lastIndex = 0;
   let match: RegExpExecArray | null;
@@ -64,36 +58,29 @@ export const CoursTab: React.FC<CoursTabProps> = ({
   onSectionChange,
   exercises,
   chapterExercises,
+  favoriteCourseIds = new Set(),
+  onToggleFavorite,
 }) => {
-  const referencedActivityIds: string[] = [];
-  let courseSegments: ReturnType<typeof parseCourseContent> = [];
-
   const hasSections = !!(
     currentCourse?.sections && currentCourse.sections.length > 0
   );
   const sectionsList = currentCourse?.sections || [];
 
-  // bound-guard activeSectionIndex
   const safeSectionIndex = Math.min(
     Math.max(0, activeSectionIndex),
     Math.max(0, sectionsList.length - 1),
   );
   const currentSection = hasSections ? sectionsList[safeSectionIndex] : null;
 
-  if (currentCourse) {
-    const contentToParse = currentSection
-      ? currentSection.content
-      : currentCourse.content;
-    courseSegments = parseCourseContent(contentToParse);
-    courseSegments.forEach((seg) => {
-      if (seg.type === "activity") {
-        referencedActivityIds.push(seg.value);
-      }
-    });
-  }
+  // 🔑 SEUL le contenu de la section active est parsé — plus de fuite entre sections
+  const contentToParse = currentSection
+    ? currentSection.content
+    : currentCourse?.content || "";
 
-  const unreferencedActivities = chapterExercises.filter(
-    (ex) => ex.category === "activité" && !referencedActivityIds.includes(ex.id),
+  // Les segments sont maintenant strictement liés à la section active
+  const courseSegments = React.useMemo(
+    () => parseCourseContent(contentToParse),
+    [contentToParse],
   );
 
   return (
@@ -101,40 +88,77 @@ export const CoursTab: React.FC<CoursTabProps> = ({
       {chapterCourses.length > 1 && !currentCourse ? (
         <div className="space-y-6">
           <div className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide">
-            Ce chapitre contient plusieurs cours. Sélectionnez-en un pour
-            continuer.
+            Les grands titres du chapitre
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            {chapterCourses.map((course) => (
-              <div
-                key={course.id}
-                className="group relative overflow-hidden rounded-3xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 shadow-sm transition hover:border-emerald-500"
-              >
-                <div className="space-y-3">
-                  <div className="text-xs uppercase tracking-[0.24em] font-bold text-emerald-600">
-                    Cours
-                  </div>
-                  <h3 className="font-display text-base font-bold text-gray-900 dark:text-white">
-                    {course.title}
-                  </h3>
-                  <p className="text-[10.5px] text-gray-500 dark:text-slate-400">
-                    {course.sections?.length || 0} section(s)
-                  </p>
-                </div>
+            {chapterCourses.map((course) => {
+              const isFavorite = favoriteCourseIds.has(course.id);
 
-                <button
-                  onClick={() => onSelectCourse(course.id)}
-                  className="mt-6 w-full rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700 transition hover:bg-emerald-100"
+              const handleFavoriteClick = async (e: React.MouseEvent) => {
+                e.stopPropagation();
+                if (onToggleFavorite) {
+                  try {
+                    await onToggleFavorite(course.id);
+                  } catch (err) {
+                    console.error(
+                      "[EduTogo] Erreur lors de la modification du favori:",
+                      err,
+                    );
+                  }
+                }
+              };
+
+              return (
+                <div
+                  key={course.id}
+                  className="group relative overflow-hidden rounded-3xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 shadow-sm transition hover:border-emerald-500"
                 >
-                  Accéder
-                </button>
-              </div>
-            ))}
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <div className="text-xs uppercase tracking-[0.24em] font-bold text-emerald-600">
+                      Cours
+                    </div>
+                    <button
+                      onClick={handleFavoriteClick}
+                      className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+                      title={
+                        isFavorite
+                          ? "Retirer des favoris"
+                          : "Ajouter aux favoris"
+                      }
+                    >
+                      <Heart
+                        size={16}
+                        className={`${
+                          isFavorite
+                            ? "fill-rose-500 text-rose-500"
+                            : "text-gray-300 dark:text-slate-600 hover:text-rose-400"
+                        } transition-colors`}
+                      />
+                    </button>
+                  </div>
+                  <div className="space-y-3">
+                    <h3 className="font-display text-base font-bold text-gray-900 dark:text-white">
+                      {course.title}
+                    </h3>
+                    <p className="text-[10.5px] text-gray-500 dark:text-slate-400">
+                      {course.sections?.length || 0} section(s)
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => onSelectCourse(course.id)}
+                    className="group mt-6 flex w-full items-center justify-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700 transition hover:bg-emerald-100"
+                  >
+                    <span>Accéder</span>
+                    <ChevronRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </div>
       ) : currentCourse ? (
         <div className="space-y-6">
-          {/* Breadcrumb: visible when there are multiple courses in the chapter */}
           {chapterCourses.length > 1 && (
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-600 dark:text-gray-300">
@@ -148,12 +172,13 @@ export const CoursTab: React.FC<CoursTabProps> = ({
                 <span className="ml-2 font-semibold">
                   {currentCourse.title}
                   {hasSections && currentCourse.sections && (
-                    <span className="ml-2 text-xs font-mono text-gray-500">(Section {safeSectionIndex + 1}/{sectionsList.length})</span>
+                    <span className="ml-2 text-xs font-mono text-gray-500">
+                      (Section {safeSectionIndex + 1}/{sectionsList.length})
+                    </span>
                   )}
                 </span>
               </div>
 
-              {/* Section jump dropdown */}
               {hasSections && (
                 <div>
                   <label className="sr-only">Aller à la section</label>
@@ -172,7 +197,7 @@ export const CoursTab: React.FC<CoursTabProps> = ({
               )}
             </div>
           )}
-          {/* Custom Sections Navigation Bar */}
+
           {hasSections && currentSection && (
             <div className="p-4 bg-emerald-500/10 dark:bg-emerald-500/5 border border-emerald-100/50 dark:border-emerald-950/30 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
               <div className="space-y-0.5 text-left">
@@ -223,7 +248,7 @@ export const CoursTab: React.FC<CoursTabProps> = ({
                 );
               }
 
-              // seg.type === "activity"
+              // seg.type === "activity" — rendu uniquement pour la section active
               const actId = seg.value;
               const act = exercises.find((e) => e.id === actId);
               if (!act) {
@@ -252,7 +277,6 @@ export const CoursTab: React.FC<CoursTabProps> = ({
             })}
           </article>
 
-          {/* Sequential/Paginated section navigations buttons */}
           {hasSections && (
             <div className="flex items-center justify-between pt-5 border-t border-gray-150 dark:border-slate-855 mt-8">
               <button
@@ -287,37 +311,23 @@ export const CoursTab: React.FC<CoursTabProps> = ({
         <div className="text-center py-12 text-gray-400 dark:text-slate-500">
           <BookOpenText className="mx-auto h-12 w-12 text-gray-300 dark:text-slate-700 mb-3" />
           <p>
-            Cours en cours de rédaction par l'équipe administrative
-            académique.
+            Cours en cours de rédaction par l'équipe administrative académique.
           </p>
         </div>
       )}
 
-      {/* Fallback for unreferenced Learning Activities */}
-      {unreferencedActivities.length > 0 && (
-        <div className="mt-8 pt-8 border-t border-gray-150 dark:border-slate-700/80 space-y-6">
-          <div className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-            <h3 className="font-display font-bold text-base text-gray-950 dark:text-white">
-              Activités complémentaires du chapitre
-            </h3>
-          </div>
-          <div className="grid grid-cols-1 gap-6">
-            {unreferencedActivities.map((act) => (
-              <DynamicExerciseCanvas
-                key={act.id}
-                id={act.id}
-                number={act.number}
-                title={act.title}
-                question={act.question}
-                hint={act.hint}
-                solution={act.solution}
-                category="activité"
-              />
-            ))}
-          </div>
-        </div>
-      )}
+      {/* 
+        SUPPRESSION DU BLOC unreferencedActivities
+        ==========================================
+        Avant : ce bloc s'affichait TOUJOURS (même quand currentCourse === null)
+        et montrait toutes les activités du chapitre non référencées.
+        
+        Maintenant : SUPPRIMÉ COMPLÈTEMENT.
+        
+        Règle d'or : une activité qui n'est pas injectée via [[activity:ID]]
+        dans une section de cours n'est tout simplement pas affichée.
+        L'admin DOIT la placer explicitement dans le contenu d'une section.
+      */}
     </div>
   );
 };

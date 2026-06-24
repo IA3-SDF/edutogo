@@ -1,9 +1,9 @@
-﻿import React from "react";
-import { Edit3, Trash } from "lucide-react";
+﻿import { Edit3, Trash } from "lucide-react";
+import React from "react";
 import { DatabaseState, Exercise } from "../../../types";
 import { ModalState } from "./adminTypes";
 import { EditableField } from "./EditableField";
-import { MathRenderer } from "../MathRenderer";
+import { MathRenderer } from "./MathRenderer";
 
 interface ExercicesTabProps {
   db: DatabaseState;

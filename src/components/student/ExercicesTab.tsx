@@ -1,15 +1,19 @@
-﻿import React from "react";
-import { Calculator } from "lucide-react";
+﻿import { Calculator, Heart } from "lucide-react";
+import React from "react";
 import { Exercise } from "../../../types";
 
 interface ExercicesTabProps {
   exercises: Exercise[];
   onSelectExercise: (exercise: Exercise) => void;
+  favoriteExerciseIds?: Set<string>;
+  onToggleFavorite?: (exerciseId: string) => Promise<void>;
 }
 
 export const ExercicesTab: React.FC<ExercicesTabProps> = ({
   exercises,
   onSelectExercise,
+  favoriteExerciseIds = new Set(),
+  onToggleFavorite,
 }) => {
   return (
     <div className="space-y-6">
@@ -38,55 +42,96 @@ export const ExercicesTab: React.FC<ExercicesTabProps> = ({
                     : "bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300 border border-rose-100/50 dark:border-rose-900/30";
 
               const hasSolution = !!ex.solution && ex.solution.trim().length > 0;
+              const isFavorite = favoriteExerciseIds.has(ex.id);
 
-              return (
-                <button
-                  key={ex.id}
-                  onClick={() => onSelectExercise(ex)}
-                  className="text-left w-full cursor-pointer group bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5 hover:border-[#3B6E8F] dark:hover:border-indigo-500 hover:shadow-md dark:hover:shadow-indigo-950/10 transition-all duration-300 flex flex-col justify-between min-h-[148px]"
-                >
-                  <div className="w-full">
-                    <div className="flex items-center justify-between gap-2 mb-2.5">
-                      <span className="text-[10px] font-mono tracking-wider font-bold text-[#3B6E8F] dark:text-indigo-400 bg-[#3B6E8F]/5 dark:bg-indigo-500/10 px-2.5 py-0.5 rounded-lg uppercase">
-                        Exercice {ex.number}
-                      </span>
+              const handleFavoriteClick = async (e: React.MouseEvent) => {
+                e.stopPropagation();
+                if (onToggleFavorite) {
+                  try {
+                    await onToggleFavorite(ex.id);
+                  } catch (err) {
+                    console.error("[EduTogo] Erreur lors de la modification du favori:", err);
+                  }
+                }
+              };
 
-                      <span
-                        className={`text-[9.5px] font-bold px-2 py-0.5 rounded-md ${difficultyColor}`}
-                      >
-                        {difficultyStr}
-                      </span>
-                    </div>
+return (
+  <div
+    key={ex.id}
+    onClick={() => onSelectExercise(ex)}
+    role="button"
+    tabIndex={0}
+    onKeyDown={(e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        onSelectExercise(ex);
+      }
+    }}
+    className="text-left w-full cursor-pointer group bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5 hover:border-[#3B6E8F] dark:hover:border-indigo-500 hover:shadow-md dark:hover:shadow-indigo-950/10 transition-all duration-300 flex flex-col justify-between min-h-[148px]"
+  >
+    <div className="w-full">
+      <div className="flex items-center justify-between gap-2 mb-2.5">
+        <span className="text-[10px] font-mono tracking-wider font-bold text-[#3B6E8F] dark:text-indigo-400 bg-[#3B6E8F]/5 dark:bg-indigo-500/10 px-2.5 py-0.5 rounded-lg uppercase">
+          Exercice {ex.number}
+        </span>
 
-                    <h4 className="font-display font-bold text-sm text-gray-800 dark:text-gray-100 group-hover:text-[#3B6E8F] dark:group-hover:text-indigo-400 transition-colors line-clamp-1">
-                      {ex.title}
-                    </h4>
+        <button
+          type="button"
+          onClick={handleFavoriteClick}
+          className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+          title={
+            isFavorite
+              ? "Retirer des favoris"
+              : "Ajouter aux favoris"
+          }
+        >
+          <Heart
+            size={16}
+            className={`${
+              isFavorite
+                ? "fill-rose-500 text-rose-500"
+                : "text-gray-300 dark:text-slate-600 hover:text-rose-400"
+            } transition-colors`}
+          />
+        </button>
 
-                    <p className="text-[11px] text-[#7C8590] dark:text-[#94A3B8] mt-1.5 line-clamp-2 leading-relaxed">
-                      {ex.question
-                        .replace(/\$\$[\s\S]*?\$\$/g, " [Équation] ")
-                        .replace(/\$[\s\S]*?\$/g, " [Formule] ")
-                        .substring(0, 110)}
-                    </p>
-                  </div>
+        <span
+          className={`text-[9.5px] font-bold px-2 py-0.5 rounded-md ${difficultyColor}`}
+        >
+          {difficultyStr}
+        </span>
+      </div>
 
-                  <div className="flex items-center justify-between gap-4 mt-4 pt-3 border-t border-gray-100 dark:border-slate-800/60 w-full">
-                    <div className="flex items-center gap-1.5 text-[10.5px]">
-                      <span
-                        className={`h-2 w-2 rounded-full ${hasSolution ? "bg-emerald-500" : "bg-amber-400"}`}
-                      />
-                      <span className="text-gray-500 dark:text-slate-400 font-medium">
-                        {hasSolution ? "Corrigé rédigé" : "Recherche libre"}
-                      </span>
-                    </div>
+      <h4 className="font-display font-bold text-sm text-gray-800 dark:text-gray-100 group-hover:text-[#3B6E8F] dark:group-hover:text-indigo-400 transition-colors line-clamp-1">
+        {ex.title}
+      </h4>
 
-                    <span className="text-[11px] font-bold text-[#3B6E8F] dark:text-indigo-400 flex items-center gap-0.5 group-hover:translate-x-1 transition-transform">
-                      Consulter ➔
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
+      <p className="text-[11px] text-[#7C8590] dark:text-[#94A3B8] mt-1.5 line-clamp-2 leading-relaxed">
+        {ex.question
+          .replace(/\$\$[\s\S]*?\$\$/g, " [Équation] ")
+          .replace(/\$[\s\S]*?\$/g, " [Formule] ")
+          .substring(0, 110)}
+      </p>
+    </div>
+
+    <div className="flex items-center justify-between gap-4 mt-4 pt-3 border-t border-gray-100 dark:border-slate-800/60 w-full">
+      <div className="flex items-center gap-1.5 text-[10.5px]">
+        <span
+          className={`h-2 w-2 rounded-full ${
+            hasSolution ? "bg-emerald-500" : "bg-amber-400"
+          }`}
+        />
+        <span className="text-gray-500 dark:text-slate-400 font-medium">
+          {hasSolution ? "Corrigé rédigé" : "Recherche libre"}
+        </span>
+      </div>
+
+      <span className="text-[11px] font-bold text-[#3B6E8F] dark:text-indigo-400 flex items-center gap-0.5 group-hover:translate-x-1 transition-transform">
+        Consulter ➔
+      </span>
+    </div>
+  </div>
+);            })}
           </div>
         </div>
       ) : (

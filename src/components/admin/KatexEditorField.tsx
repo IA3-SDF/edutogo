@@ -1,5 +1,5 @@
 ﻿import React from "react";
-import { MathRenderer } from "../MathRenderer";
+import { MathRenderer } from "./MathRenderer";
 
 interface KatexEditorFieldProps {
   label: string;

@@ -1,21 +1,22 @@
 import { ArrowLeft } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { bucketFromStoragePath, getSignedUrl, trackChapterView } from "../../lib/supabaseFunctions";
+import { bucketFromStoragePath, getSignedUrl, trackChapterView } from "../../../lib/supabaseFunctions";
+import { useFavorites } from "../../../lib/useFavorites";
 import {
   Chapter,
   DatabaseState,
   Exercise,
   Subject,
-} from "../../types";
-import { ChapterClassroomSidebar } from "./student/ChapterClassroomSidebar";
-import { ChapterList } from "./student/ChapterList";
-import { CoursTab } from "./student/CoursTab";
-import { EvaluationSidebar } from "./student/EvaluationSidebar";
-import { ExercicesTab } from "./student/ExercicesTab";
-import { ExerciseDetailDrawer } from "./student/ExerciseDetailDrawer";
-import { QcmTab } from "./student/QcmTab";
-import { SolutionsTab } from "./student/SolutionsTab";
-import { SubjectSidebar } from "./student/SubjectSidebar";
+} from "../../../types";
+import { ChapterClassroomSidebar } from "./ChapterClassroomSidebar";
+import { ChapterList } from "./ChapterList";
+import { CoursTab } from "./CoursTab";
+import { EvaluationSidebar } from "./EvaluationSidebar";
+import { ExercicesTab } from "./ExercicesTab";
+import { ExerciseDetailDrawer } from "./ExerciseDetailDrawer";
+import { QcmTab } from "./QcmTab";
+import { SolutionsTab } from "./SolutionsTab";
+import { SubjectSidebar } from "./SubjectSidebar";
 
 type ClassroomTab = "cours" | "exercices" | "qcm" | "solutions";
 
@@ -35,6 +36,13 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
   initialChapterId,
 }) => {
   const [isLoading, setIsLoading] = useState(true);
+
+  // Hook pour gérer les favoris
+  const {
+    favorites,
+    isFavorite,
+    toggleFavoriteState,
+  } = useFavorites();
 
   // Get subjects related to current level
   const filteredSubjects = db.subjects.filter(
@@ -186,6 +194,28 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
     (group) => group.chapterId === activeChapter?.id,
   );
 
+  // Build Sets of favorite IDs for efficient lookup
+  const favoriteExerciseIds = new Set(
+    favorites
+      .filter((fav) => fav.resourceType === "exercise")
+      .map((fav) => fav.resourceId),
+  );
+  const favoriteQuizGroupIds = new Set(
+    favorites
+      .filter((fav) => fav.resourceType === "quiz")
+      .map((fav) => fav.resourceId),
+  );
+  const favoriteCourseIds = new Set(
+    favorites
+      .filter((fav) => fav.resourceType === "course")
+      .map((fav) => fav.resourceId),
+  );
+  const favoriteEvaluationIds = new Set(
+    favorites
+      .filter((fav) => fav.resourceType === "evaluation")
+      .map((fav) => fav.resourceId),
+  );
+
   // Stats
   const completedChaptersCount = activeChapters.filter(
     (c) => c.isCompleted,
@@ -315,6 +345,10 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                   onSectionChange={setActiveSectionIndex}
                   exercises={db.exercises}
                   chapterExercises={currentExercises}
+                  favoriteCourseIds={favoriteCourseIds}
+                  onToggleFavorite={async (courseId) => {
+                    await toggleFavoriteState(courseId, "course");
+                  }}
                 />
               )}
 
@@ -324,6 +358,10 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                     (ex) => ex.category !== "activité",
                   )}
                   onSelectExercise={setSelectedExerciseForDetail}
+                  favoriteExerciseIds={favoriteExerciseIds}
+                  onToggleFavorite={async (exerciseId) => {
+                    await toggleFavoriteState(exerciseId, "exercise");
+                  }}
                 />
               )}
 
@@ -343,6 +381,10 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                   onRestart={() => {
                     setQcmAnswers({});
                     setQuizSubmitted(false);
+                  }}
+                  favoriteQuizGroupIds={favoriteQuizGroupIds}
+                  onToggleFavorite={async (quizGroupId) => {
+                    await toggleFavoriteState(quizGroupId, "quiz");
                   }}
                 />
               )}
@@ -378,6 +420,10 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
             assessmentsAnnales={assessmentsAnnales}
             downloadTracker={downloadTracker}
             onDownload={handleDownload}
+            favoriteEvaluationIds={favoriteEvaluationIds}
+            onToggleFavorite={async (evaluationId) => {
+              await toggleFavoriteState(evaluationId, "evaluation");
+            }}
           />
         </div>
       )}

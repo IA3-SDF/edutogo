@@ -4,14 +4,13 @@ import {
   LogIn,
   Moon,
   Search,
-  Settings as SettingsIcon,
   Sun
 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React from "react";
-import { bucketFromStoragePath, getSignedUrl } from "../../lib/supabaseFunctions";
-import { AuthModal } from "../components/AuthModal";
-import { useApp } from "./providers";
+import { bucketFromStoragePath, getSignedUrl } from "../../../lib/supabaseFunctions";
+import { useApp } from "../../app/providers";
+import { AuthModal } from "./AuthModal";
 
 export function HeaderFooterWrapper({
   children,
@@ -81,7 +80,7 @@ export function HeaderFooterWrapper({
     >
       {/* Dynamic Global Top Header (does not show or alters configuration when in nested Admin full view) */}
       {!isAdmin && (
-        <header className="sticky top-0 z-40 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 transition-colors duration-200">
+        <header className="sticky top-0 z-40 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 transition-colors duration-200 hiden lg:block">
           {/* Decorative National Togo Ribbon */}
           <div className="h-1 w-full bg-linear-to-r from-emerald-600 via-yellow-400 to-red-600" />
 
@@ -134,24 +133,7 @@ export function HeaderFooterWrapper({
 
             {/* Right Control actions panel */}
             <div className="flex items-center gap-3">
-              {/* Supabase Connection Status Badge */}
-              {isSupabaseConnected ? (
-                <span
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-150 dark:border-emerald-800"
-                  title="Connecté à la base de données Supabase Live"
-                >
-                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                  Live BD
-                </span>
-              ) : (
-                <span
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-150 dark:border-amber-800"
-                  title="Aucune information Supabase trouvée dans les variables d'environnement. Mode de démonstration de haute fidélité."
-                >
-                  <span className="h-2 w-2 rounded-full bg-amber-400" />
-                  Offline Demo
-                </span>
-              )}
+              
 
               <div className="hidden md:inline-flex items-center rounded-lg border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 transition-colors focus-within:ring-2 focus-within:ring-emerald-500">
                 <Search className="h-4 w-4 mr-2 text-gray-500 dark:text-slate-400" />
@@ -161,6 +143,7 @@ export function HeaderFooterWrapper({
                   onChange={(event) => setSearchQuery(event.target.value)}
                   onKeyDown={(event) => event.key === "Enter" && handleSearch()}
                   placeholder="Rechercher un cours..."
+                  suppressHydrationWarning 
                   className="min-w-0 bg-transparent focus:outline-none"
                 />
               </div>
@@ -188,18 +171,6 @@ export function HeaderFooterWrapper({
 
               {isLoggedIn ? (
                 <div className="flex items-center gap-2">
-                  <button
-                    id="btn-goto-settings"
-                    onClick={() => router.push("/settings")}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-transparent transition-colors text-xs font-bold cursor-pointer ${
-                      pathname === "/settings"
-                        ? "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/40 text-emerald-700"
-                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-50"
-                    }`}
-                  >
-                    <SettingsIcon className="h-4 w-4 text-gray-400" />
-                    <span className="hidden md:inline">Profil</span>
-                  </button>
 
                   {/* Miniature Circle Initials badge linking to setting */}
                   <button
@@ -242,7 +213,7 @@ export function HeaderFooterWrapper({
 
       {/* Static Togo Footer - shown only when outside of standard fullscreen Admin Dashboards & Landing page */}
       {!isAdmin && pathname !== "/" && (
-        <footer className="border-t border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-xs py-8 text-gray-400 transition-colors">
+        <footer className="border-t border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-xs py-8 text-gray-400 transition-colors hiden lg:block">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <span className="font-bold text-gray-800 dark:text-gray-300">

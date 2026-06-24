@@ -1,12 +1,13 @@
-﻿import React from "react";
-import {
-  FileText,
-  Download,
-  ExternalLink,
-  CheckCircle,
-  Bookmark,
-  Send,
+﻿import {
+    Bookmark,
+    CheckCircle,
+    Download,
+    ExternalLink,
+    FileText,
+    Heart,
+    Send,
 } from "lucide-react";
+import React from "react";
 import { Evaluation } from "../../../types";
 
 interface EvaluationSidebarProps {
@@ -14,6 +15,8 @@ interface EvaluationSidebarProps {
   assessmentsAnnales: Evaluation[];
   downloadTracker: Record<string, boolean>;
   onDownload: (evalId: string, type: "sujet" | "corrigé") => void;
+  favoriteEvaluationIds?: Set<string>;
+  onToggleFavorite?: (evaluationId: string) => Promise<void>;
 }
 
 export const EvaluationSidebar: React.FC<EvaluationSidebarProps> = ({
@@ -21,6 +24,8 @@ export const EvaluationSidebar: React.FC<EvaluationSidebarProps> = ({
   assessmentsAnnales,
   downloadTracker,
   onDownload,
+  favoriteEvaluationIds = new Set(),
+  onToggleFavorite,
 }) => {
   return (
     <div className="lg:col-span-3 space-y-6">
@@ -36,14 +41,42 @@ export const EvaluationSidebar: React.FC<EvaluationSidebarProps> = ({
             {assessmentsDS.map((ds) => {
               const isSujetD = downloadTracker[`${ds.id}-sujet`];
               const isSolD = downloadTracker[`${ds.id}-corrigé`];
+              const isFavorite = favoriteEvaluationIds.has(ds.id);
+
+              const handleFavoriteClick = async (e: React.MouseEvent) => {
+                e.stopPropagation();
+                if (onToggleFavorite) {
+                  try {
+                    await onToggleFavorite(ds.id);
+                  } catch (err) {
+                    console.error("[EduTogo] Erreur lors de la modification du favori:", err);
+                  }
+                }
+              };
 
               return (
                 <div
                   key={ds.id}
                   className="p-3 bg-gray-50 dark:bg-slate-900/60 rounded-xl space-y-2 border border-gray-100 dark:border-slate-850 text-xs"
                 >
-                  <div className="font-bold text-gray-800 dark:text-gray-100">
-                    {ds.title}
+                  <div className="flex items-center justify-between">
+                    <div className="font-bold text-gray-800 dark:text-gray-100">
+                      {ds.title}
+                    </div>
+                    <button
+                      onClick={handleFavoriteClick}
+                      className="p-1 rounded hover:bg-gray-200 dark:hover:bg-slate-800 transition-colors"
+                      title={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+                    >
+                      <Heart
+                        size={14}
+                        className={`${
+                          isFavorite
+                            ? "fill-rose-500 text-rose-500"
+                            : "text-gray-300 dark:text-slate-600 hover:text-rose-400"
+                        } transition-colors`}
+                      />
+                    </button>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
@@ -86,17 +119,47 @@ export const EvaluationSidebar: React.FC<EvaluationSidebarProps> = ({
             {assessmentsAnnales.map((ann) => {
               const isSujetD = downloadTracker[`${ann.id}-sujet`];
               const isSolD = downloadTracker[`${ann.id}-corrigé`];
+              const isFavorite = favoriteEvaluationIds.has(ann.id);
+
+              const handleFavoriteClick = async (e: React.MouseEvent) => {
+                e.stopPropagation();
+                if (onToggleFavorite) {
+                  try {
+                    await onToggleFavorite(ann.id);
+                  } catch (err) {
+                    console.error("[EduTogo] Erreur lors de la modification du favori:", err);
+                  }
+                }
+              };
 
               return (
                 <div
                   key={ann.id}
                   className="p-3 bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-850 rounded-xl space-y-2 text-xs"
                 >
-                  <div className="flex items-center justify-between font-bold text-gray-850 dark:text-gray-100">
-                    <span>{ann.title}</span>
-                    <span className="text-[9px] font-bold text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-950/30 px-1.5 py-0.2 rounded">
-                      BAC II {ann.year}
-                    </span>
+                  <div className="flex items-center justify-between">
+                    <div className="font-bold text-gray-850 dark:text-gray-100">
+                      {ann.title}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] font-bold text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-950/30 px-1.5 py-0.2 rounded">
+                        BAC II {ann.year}
+                      </span>
+                      <button
+                        onClick={handleFavoriteClick}
+                        className="p-1 rounded hover:bg-gray-200 dark:hover:bg-slate-800 transition-colors"
+                        title={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+                      >
+                        <Heart
+                          size={14}
+                          className={`${
+                            isFavorite
+                              ? "fill-rose-500 text-rose-500"
+                              : "text-gray-300 dark:text-slate-600 hover:text-rose-400"
+                          } transition-colors`}
+                        />
+                      </button>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2 pt-1">
                     <button

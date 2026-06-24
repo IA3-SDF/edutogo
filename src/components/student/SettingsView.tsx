@@ -24,15 +24,15 @@ import {
   X
 } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { getSupabaseClient } from "../../lib/supabase";
+import { getSupabaseClient } from "../../../lib/supabase";
 import {
   bucketFromStoragePath,
   fetchUserProfile,
   getSignedUrl,
   syncUserProfile,
   uploadStorageFile,
-} from "../../lib/supabaseFunctions";
-import { useApp } from "../../src/app/providers";
+} from "../../../lib/supabaseFunctions";
+import { useApp } from "../../app/providers";
 
 /* ==========================================================================
    NOTIFICATION BANNER SYSTEM

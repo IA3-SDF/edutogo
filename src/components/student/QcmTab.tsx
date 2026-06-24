@@ -1,7 +1,7 @@
-﻿import { Check, HelpCircle, X } from "lucide-react";
+﻿import { Heart, HelpCircle } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
-import { MathRenderer } from "../MathRenderer";
 import { QuizGroup, QuizQuestion } from "../../../types";
+import { MathRenderer } from "../admin/MathRenderer";
 
 interface QcmTabProps {
   quizzes: QuizQuestion[];
@@ -11,6 +11,8 @@ interface QcmTabProps {
   onAnswer: (questionId: string, selectedIndex: number) => void;
   onSubmit: () => void;
   onRestart: () => void;
+  favoriteQuizGroupIds?: Set<string>;
+  onToggleFavorite?: (quizGroupId: string) => Promise<void>;
 }
 
 export const QcmTab: React.FC<QcmTabProps> = ({
@@ -21,6 +23,8 @@ export const QcmTab: React.FC<QcmTabProps> = ({
   onAnswer,
   onSubmit,
   onRestart,
+  favoriteQuizGroupIds = new Set(),
+  onToggleFavorite,
 }) => {
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
   const [screen, setScreen] = useState<"landing" | "question" | "results">("landing");
@@ -110,25 +114,59 @@ export const QcmTab: React.FC<QcmTabProps> = ({
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          {groupedQuizzes.map((group) => (
-            <div key={group.id} className="rounded-3xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm transition hover:border-emerald-500">
-              <div className="text-xs uppercase tracking-[0.24em] font-bold text-emerald-600 mb-3">
-                Quiz
-              </div>
-              <h3 className="font-display text-lg font-bold text-gray-900 dark:text-white mb-2">
-                {group.title}
-              </h3>
-              <p className="text-sm text-gray-500 dark:text-slate-400 mb-4">
-                {group.questions?.length ?? 0} question(s) · environ {Math.max(1, Math.round((group.questions?.length ?? 1) * 0.8))} min
-              </p>
-              <button
-                onClick={() => handleStartQuiz(group.id)}
-                className="w-full rounded-full bg-emerald-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-emerald-700"
+          {groupedQuizzes.map((group) => {
+            const isFavorite = favoriteQuizGroupIds.has(group.id);
+
+            const handleFavoriteClick = async (e: React.MouseEvent) => {
+              e.stopPropagation();
+              if (onToggleFavorite) {
+                try {
+                  await onToggleFavorite(group.id);
+                } catch (err) {
+                  console.error("[EduTogo] Erreur lors de la modification du favori:", err);
+                }
+              }
+            };
+
+            return (
+              <div
+                key={group.id}
+                className="rounded-3xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm transition hover:border-emerald-500"
               >
-                Commencer ce quiz
-              </button>
-            </div>
-          ))}
+                <div className="flex items-start justify-between mb-3">
+                  <div className="text-xs uppercase tracking-[0.24em] font-bold text-emerald-600">
+                    Quiz
+                  </div>
+                  <button
+                    onClick={handleFavoriteClick}
+                    className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+                    title={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+                  >
+                    <Heart
+                      size={16}
+                      className={`${
+                        isFavorite
+                          ? "fill-rose-500 text-rose-500"
+                          : "text-gray-300 dark:text-slate-600 hover:text-rose-400"
+                      } transition-colors`}
+                    />
+                  </button>
+                </div>
+                <h3 className="font-display text-lg font-bold text-gray-900 dark:text-white mb-2">
+                  {group.title}
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-slate-400 mb-4">
+                  {group.questions?.length ?? 0} question(s) · environ {Math.max(1, Math.round((group.questions?.length ?? 1) * 0.8))} min
+                </p>
+                <button
+                  onClick={() => handleStartQuiz(group.id)}
+                  className="w-full rounded-full bg-emerald-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-emerald-700"
+                >
+                  Commencer ce quiz
+                </button>
+              </div>
+            );
+          })}
         </div>
       </div>
     );
@@ -150,19 +188,17 @@ export const QcmTab: React.FC<QcmTabProps> = ({
       <div className="space-y-8 animate-fade-in">
         <div className="rounded-3xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-8 shadow-sm">
           <div className="text-xs uppercase tracking-[0.26em] font-bold text-emerald-600 mb-4">
-            {groupedQuizzes ? "Parcours de quiz" : "Evaluation QCM"}
+            {groupedQuizzes ? "Parcours de quiz" : "Évaluation QCM"}
           </div>
           <h2 className="font-display text-2xl font-extrabold text-gray-900 dark:text-white mb-3">
             {landingTitle}
           </h2>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-            <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
-              <p>{landingCount} question(s)</p>
-              <p>Durée estimée : ~{estimatedMinutes} min</p>
-            </div>
-            <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-200">
-              Une seule tentative. Réponds question par question sans correction instantanée.
-            </div>
+          <div className="space-y-4 text-sm text-gray-600 dark:text-gray-300 mb-4">
+            <p>Il y a {landingCount} question{landingCount > 1 ? "s" : ""}.</p>
+            <p>Appuie sur le bouton pour commencer.</p>
+          </div>
+          <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-200 mb-6">
+            Durée estimée : ~{estimatedMinutes} min.
           </div>
           <p className="text-sm text-gray-500 dark:text-slate-400 leading-relaxed">
             Conditions réelles du Bac : réponds à chaque question, puis valide ton quiz pour accéder au score et aux explications détaillées.
@@ -171,7 +207,7 @@ export const QcmTab: React.FC<QcmTabProps> = ({
             onClick={() => handleStartQuiz(groupedQuizzes?.length === 1 ? groupedQuizzes[0].id : undefined)}
             className="mt-8 rounded-full bg-emerald-600 px-6 py-3 text-sm font-bold text-white transition hover:bg-emerald-700"
           >
-            Commencer le quiz
+            Démarrer pour commencer
           </button>
         </div>
       </div>

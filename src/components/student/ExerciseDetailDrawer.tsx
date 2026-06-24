@@ -1,7 +1,7 @@
-﻿import React from "react";
-import { X } from "lucide-react";
+﻿import { X } from "lucide-react";
+import React from "react";
 import { Exercise } from "../../../types";
-import { DynamicExerciseCanvas } from "../DynamicExerciseCanvas";
+import { DynamicExerciseCanvas } from "./DynamicExerciseCanvas";
 
 interface ExerciseDetailDrawerProps {
   exercise: Exercise | null;

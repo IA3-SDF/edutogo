@@ -101,6 +101,7 @@ export interface Evaluation {
 
 // User Profile state
 export interface UserProfile {
+  id?: string;
   fullName: string;
   role: "student" | "admin";
   classLevel: string; // e.g., "terminale", "premiere", "seconde"
@@ -110,6 +111,15 @@ export interface UserProfile {
     notifications: boolean;
     offlineMode: boolean;
   };
+}
+
+export interface UserNotification {
+  id: number;
+  userId: string;
+  title: string;
+  message: string;
+  isRead: boolean;
+  createdAt: string;
 }
 
 export interface FavoriteRow {
