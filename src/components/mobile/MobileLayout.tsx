@@ -9,14 +9,23 @@ import { MobileLearnView } from "./MobileLearnView";
 import { MobileLibraryView } from "./MobileLibraryView";
 import { MobileProfileView } from "./MobileProfileView";
 
-export const MobileLayout: React.FC<{ initialChapterId?: string | null }> = ({
+export const MobileLayout: React.FC<{
+  initialChapterId?: string | null;
+  initialTab?: MobileTab;
+}> = ({
   initialChapterId,
+  initialTab,
 }) => {
   const [activeTab, setActiveTab] = useState<MobileTab>(
-    initialChapterId ? "learn" : "home",
+    initialTab || (initialChapterId ? "learn" : "home"),
   );
   const { db, user, selectedLevelId, handleSelectLevel, handleLogout } =
     useApp();
+
+  React.useEffect(() => {
+    if (!initialTab) return;
+    setActiveTab(initialTab);
+  }, [initialTab]);
 
   const renderContent = () => {
     switch (activeTab) {

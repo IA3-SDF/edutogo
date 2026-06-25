@@ -44,6 +44,9 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
     toggleFavoriteState,
   } = useFavorites();
 
+  // Show premium loader while Supabase or initial data isn't ready
+  const isDataAvailable = db && Array.isArray(db.subjects) && db.subjects.length > 0 && Array.isArray(db.chapters);
+
   // Get subjects related to current level
   const filteredSubjects = db.subjects.filter(
     (sub) => sub.levelId === selectedLevelId,
@@ -162,15 +165,16 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
   }, [activeChapter, chapterCourses, selectedCourseId]);
 
   if (!selectedSubject) {
+    // If data not yet available, show premium loader
+    if (!isDataAvailable || isLoading) {
+      const PremiumLoader = require("../shared/PremiumLoader").default;
+      return <PremiumLoader message={"Préparation de votre espace..."} />;
+    }
+
     return (
       <div className="p-8 text-center bg-white dark:bg-slate-900 rounded-2xl shadow-xs">
-        <p className="text-gray-500">
-          Aucune matière disponible pour ce niveau.
-        </p>
-        <button
-          onClick={onBackToHome}
-          className="mt-4 px-4 py-2 bg-emerald-600 text-white rounded"
-        >
+        <p className="text-gray-500">Aucune matière disponible pour ce niveau.</p>
+        <button onClick={onBackToHome} className="mt-4 px-4 py-2 bg-emerald-600 text-white rounded">
           Retour à l'accueil
         </button>
       </div>

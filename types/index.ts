@@ -120,6 +120,8 @@ export interface UserNotification {
   message: string;
   isRead: boolean;
   createdAt: string;
+  resourceId?: string;
+  resourceType?: "course" | "exercise" | "quiz" | "evaluation";
 }
 
 export interface FavoriteRow {

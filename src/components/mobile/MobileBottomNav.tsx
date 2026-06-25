@@ -1,13 +1,14 @@
 "use client";
 
+import { motion, useReducedMotion } from "framer-motion";
 import {
-    BookOpen,
-    Home,
-    Library,
-    Trophy,
-    User,
+  BookOpen,
+  Home,
+  Library,
+  Trophy,
+  User,
 } from "lucide-react";
-import React from "react";
+import React, { useState, useEffect } from "react"; // 1. Ajout de useState et useEffect
 
 export type MobileTab = "home" | "learn" | "library" | "activities" | "profile";
 
@@ -28,17 +29,40 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   activeTab,
   onTabChange,
 }) => {
+  const prefersReducedMotion = useReducedMotion();
+  const [isMounted, setIsMounted] = useState(false); // 2. État pour suivre le rendu client
+
+  // 3. Déclenché uniquement après une hydratation réussie sur le client
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // 4. On applique les réductions d'animation seulement si on est sur le client
+  const shouldReduceMotion = isMounted && prefersReducedMotion;
+
+  const springTransition = shouldReduceMotion
+    ? { duration: 0 }
+    : { type: "spring" as const, stiffness: 420, damping: 38, mass: 0.9 };
+
+  const tapTransition = shouldReduceMotion
+    ? { duration: 0 }
+    : { duration: 0.15, ease: "easeOut" as const };
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden">
-      {/* Halo supérieur pour la profondeur */}
-      <div className="absolute -top-6 left-0 right-0 h-6 bg-gradient-to-t from-white/80 dark:from-slate-900/80 to-transparent pointer-events-none" />
-      
-      {/* Container principal avec glassmorphism avancé */}
-      <div className="relative bg-white/85 dark:bg-slate-900/85 backdrop-blur-2xl border-t border-white/20 dark:border-slate-700/30 shadow-[0_-8px_32px_-4px_rgba(0,0,0,0.08)] dark:shadow-[0_-8px_32px_-4px_rgba(0,0,0,0.3)]">
-        {/* Ligne d'accent subtile en haut */}
-        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-emerald-200/50 dark:via-emerald-800/30 to-transparent" />
-        
-        <div className="flex items-end justify-around h-[72px] pb-2 px-2 safe-area-pb">
+    <nav
+      className="fixed inset-x-0 bottom-0 z-50 lg:hidden"
+      role="navigation"
+      aria-label="Navigation principale"
+    >
+      <div className="pointer-events-none absolute -top-10 left-0 right-0 h-10 bg-gradient-to-t from-white/60 dark:from-slate-950/60 to-transparent" />
+
+      <div className="px-4 pt-2 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <div
+          className="relative mx-auto flex max-w-md items-stretch gap-0.5 rounded-[28px] border border-black/[0.06] dark:border-white/[0.08]
+                     bg-white/90 dark:bg-slate-900/85 backdrop-blur-xl px-1.5 py-1.5
+                     shadow-[0_12px_32px_-8px_rgba(15,23,42,0.18),0_2px_8px_-2px_rgba(15,23,42,0.08)]
+                     dark:shadow-[0_12px_32px_-8px_rgba(0,0,0,0.55)]"
+        >
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -47,46 +71,42 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
               <button
                 key={tab.id}
                 onClick={() => onTabChange(tab.id)}
-                className="group relative flex flex-col items-center justify-end gap-1 w-16 h-full"
                 aria-label={tab.label}
+                aria-current={isActive ? "page" : undefined}
+                className="relative flex-1 select-none touch-manipulation rounded-[22px] outline-none
+                           focus-visible:ring-2 focus-visible:ring-emerald-500/40"
               >
-                {/* Background glow actif */}
                 {isActive && (
-                  <div className="absolute inset-x-1 -top-1 bottom-2 bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl transition-all duration-300 ease-out" />
-                )}
-                
-                {/* Container icône avec badge/scale */}
-                <div className="relative flex items-center justify-center">
-                  {/* Cercle indicateur actif (petit point) */}
-                  {isActive && (
-                    <span className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)] animate-pulse" />
-                  )}
-                  
-                  <Icon
-                    className={`h-[22px] w-[22px] transition-all duration-300 ease-out ${
-                      isActive
-                        ? "text-emerald-600 dark:text-emerald-400 scale-110 drop-shadow-[0_2px_4px_rgba(16,185,129,0.25)]"
-                        : "text-gray-400 dark:text-slate-500 group-hover:text-gray-600 dark:group-hover:text-slate-300 group-hover:scale-105"
-                    }`}
-                    strokeWidth={isActive ? 2.5 : 1.8}
+                  <motion.span
+                    layoutId="activeTabBackground"
+                    className="absolute inset-0 rounded-[22px] bg-emerald-500/10 dark:bg-emerald-400/[0.14]"
+                    transition={springTransition}
                   />
-                </div>
-
-                {/* Label avec animation */}
-                <span
-                  className={`text-[10px] font-bold tracking-wide transition-all duration-300 ease-out ${
-                    isActive
-                      ? "text-emerald-600 dark:text-emerald-400 translate-y-0 opacity-100"
-                      : "text-gray-400 dark:text-slate-500 group-hover:text-gray-500 dark:group-hover:text-slate-400 translate-y-0.5 opacity-80"
-                  }`}
-                >
-                  {tab.label}
-                </span>
-
-                {/* Barre de sélection active (style iOS 18) */}
-                {isActive && (
-                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-8 h-1 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" />
                 )}
+
+                <motion.span
+                  className="relative z-10 flex flex-col items-center justify-center gap-1 py-2"
+                  whileTap={shouldReduceMotion ? {} : { scale: 0.92 }} // 5. Désactivation propre du tap
+                  transition={tapTransition}
+                >
+                  <Icon
+                    className={`h-[21px] w-[21px] shrink-0 transition-colors duration-200 ${
+                      isActive
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : "text-gray-400 dark:text-slate-500"
+                    }`}
+                    strokeWidth={isActive ? 2.25 : 1.75}
+                  />
+                  <span
+                    className={`whitespace-nowrap text-[10.5px] font-semibold tracking-tight transition-colors duration-200 ${
+                      isActive
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : "text-gray-400 dark:text-slate-500"
+                    }`}
+                  >
+                    {tab.label}
+                  </span>
+                </motion.span>
               </button>
             );
           })}

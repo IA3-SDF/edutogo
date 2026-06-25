@@ -32,8 +32,11 @@ function StudentDashboardWithParams() {
     );
   }
 
+  const tab = searchParams.get("tab") as "home" | "learn" | "library" | "activities" | "profile" | null;
+  const mobileInitialTab = tab || (chapterId ? "learn" : "home");
+
   if (isMobile) {
-    return <MobileLayout initialChapterId={chapterId} />;
+    return <MobileLayout initialChapterId={chapterId} initialTab={mobileInitialTab} />;
   }
 
   return (

@@ -23,15 +23,13 @@ import {
   User,
   X
 } from "lucide-react";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { getSupabaseClient } from "../../../lib/supabase";
 import {
-  bucketFromStoragePath,
   fetchUserProfile,
-  getSignedUrl,
-  syncUserProfile,
-  uploadStorageFile,
+  syncUserProfile
 } from "../../../lib/supabaseFunctions";
+import { useProfileAvatar } from "../../../lib/useProfileAvatar";
 import { useApp } from "../../app/providers";
 
 /* ==========================================================================
@@ -194,9 +192,24 @@ export function SettingsView() {
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [avatarHover, setAvatarHover] = useState(false);
-  const [avatarSrc, setAvatarSrc] = useState<string | null>(null);
-  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
-  const avatarInputRef = useRef<HTMLInputElement | null>(null);
+  const {
+    avatarSrc,
+    isUploadingAvatar,
+    avatarInputRef,
+    handleAvatarUpload,
+    handleAvatarFile,
+  } = useProfileAvatar({
+    user,
+    handleUpdateUser: async (updatedUser) => {
+      await handleUpdateUser(updatedUser);
+      setUser(updatedUser);
+    },
+    onUploadError: (message) => push("error", "Échec du téléversement", message),
+    onUploadSuccess: (updatedUser) => {
+      setUser(updatedUser);
+      push("success", "Avatar enregistré", "Votre nouvelle photo de profil a bien été téléversée.");
+    },
+  });
 
   /* ── Sync local state when context user changes ───────────────────── */
   useEffect(() => {
@@ -318,80 +331,6 @@ export function SettingsView() {
     }
   };
 
-  const normalizeFileName = (name: string): string =>
-    name
-      .replace(/\s+/g, "-")
-      .replace(/[^a-zA-Z0-9-_.]/g, "")
-      .toLowerCase();
-
-  const handleAvatarUpload = () => {
-    avatarInputRef.current?.click();
-  };
-
-  const handleAvatarFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setIsUploadingAvatar(true);
-    try {
-      const supabase = getSupabaseClient();
-      if (!supabase) {
-        push(
-          "error",
-          "Supabase manquant",
-          "Impossible de téléverser votre avatar sans configuration Supabase.",
-        );
-        return;
-      }
-
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      const userId = session?.user?.id;
-      if (!userId) {
-        push(
-          "error",
-          "Utilisateur non authentifié",
-          "Vous devez être connecté pour changer votre photo de profil.",
-        );
-        return;
-      }
-
-      const sanitized = normalizeFileName(file.name);
-      const path = `${userId}/${Date.now()}-${sanitized}`;
-      const uploadResult = await uploadStorageFile("avatars", path, file);
-
-      if (!uploadResult) {
-        push(
-          "error",
-          "Échec du téléversement",
-          "Impossible de téléverser la photo de profil.",
-        );
-        return;
-      }
-
-      const updatedUser = {
-        ...user,
-        avatarUrl: uploadResult.path,
-      };
-      await handleUpdateUser(updatedUser);
-      // Use the upload helper's returned publicUrl when available (avatars are public)
-      setAvatarSrc(uploadResult.publicUrl || uploadResult.signedUrl || null);
-      push("success", "Avatar enregistré", "Votre nouvelle photo de profil a bien été téléversée.");
-    } catch (err) {
-      console.error("[SettingsView] Avatar upload error:", err);
-      push(
-        "error",
-        "Échec du téléversement",
-        "Une erreur est survenue lors du chargement de la photo.",
-      );
-    } finally {
-      setIsUploadingAvatar(false);
-      if (avatarInputRef.current) {
-        avatarInputRef.current.value = "";
-      }
-    }
-  };
 
   /* ── Handle logout with confirmation ─────────────────────────────── */
   const handleConfirmLogout = () => {
@@ -399,28 +338,7 @@ export function SettingsView() {
     setTimeout(() => handleLogout(), 1200);
   };
 
-  useEffect(() => {
-    let active = true;
-    async function loadAvatar() {
-      if (!user.avatarUrl || !isSupabaseConnected) {
-        setAvatarSrc(null);
-        return;
-      }
-      try {
-        const bucket = bucketFromStoragePath(user.avatarUrl || "");
-        // getSignedUrl handles all logic: returns publicUrl for avatars, signedUrl for others
-        const url = await getSignedUrl(bucket, user.avatarUrl || "");
-        if (active) setAvatarSrc(url);
-      } catch (err) {
-        console.error("[SettingsView] loadAvatar error:", err);
-        setAvatarSrc(null);
-      }
-    }
-    loadAvatar();
-    return () => {
-      active = false;
-    };
-  }, [user.avatarUrl, isSupabaseConnected]);
+  // Avatar is handled by `useProfileAvatar`; no local avatar loading needed here.
 
   /* ── Determine role label ─────────────────────────────────────────── */
   const roleLabel =

@@ -3,6 +3,7 @@
 import {
   Bell,
   BookOpen,
+  Camera,
   ChevronRight,
   LogOut,
   Mail,
@@ -12,11 +13,18 @@ import {
   Sun,
   User,
 } from "lucide-react";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState
+} from "react";
 import {
   fetchUserNotifications,
   markNotificationRead,
 } from "../../../lib/supabaseFunctions";
+import { useProfileAvatar } from "../../../lib/useProfileAvatar";
 import {
   DatabaseState,
   UserNotification,
@@ -73,6 +81,63 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
   const [notificationsLoading, setNotificationsLoading] = useState(false);
   const [isServiceWorkerReady, setIsServiceWorkerReady] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [draftFullName, setDraftFullName] = useState(user.fullName || "");
+  const [draftClassLevel, setDraftClassLevel] = useState(user.classLevel || "");
+
+  useEffect(() => {
+    setDraftFullName(user.fullName || "");
+    setDraftClassLevel(user.classLevel || "");
+  }, [user.fullName, user.classLevel]);
+
+  const {
+    avatarSrc,
+    isUploadingAvatar,
+    avatarInputRef,
+    handleAvatarUpload,
+    handleAvatarFile,
+  } = useProfileAvatar({
+    user,
+    handleUpdateUser: async (updatedUser) => {
+      await handleUpdateUser(updatedUser);
+    },
+    onUploadSuccess: (_updatedUser, url) => {
+      setNotificationMessage("Avatar téléversé avec succès.");
+      if (url) {
+        // Optional: we already display the loaded avatar from hook state
+      }
+    },
+    onUploadError: (message) => {
+      setNotificationMessage(message);
+    },
+  });
+
+  // Show loader while notifications or minimal profile data are still loading
+  const PremiumLoader = require("../shared/PremiumLoader").default;
+  // Only show loader when a user is present but data (notifications) are still loading.
+  const shouldShowLoader = !!user && notificationsLoading && latestNotifications.length === 0;
+
+  const router = useRouter();
+
+  // If no user detected, show a guest view with a clear login CTA.
+  if (!user || !user.id) {
+    return (
+      <div className="space-y-6 pb-24 px-4 pt-8">
+        <div className="card card-elevated p-6 text-center">
+          <h3 className="text-lg font-bold mb-2">Bienvenue sur EduTogo</h3>
+          <p className="text-sm text-gray-500 mb-4">Connectez-vous pour accéder à votre espace, vos favoris et notifications.</p>
+          <div className="flex justify-center">
+            <button
+              onClick={() => router.push("/auth")}
+              className="px-5 py-2 bg-emerald-600 text-white rounded-md font-semibold"
+            >
+              Se connecter
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const unreadCount = useMemo(
     () => latestNotifications.filter((notification) => !notification.isRead).length,
@@ -209,12 +274,25 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
     );
   }, []);
 
+  const handleSaveProfile = useCallback(async () => {
+    const trimmedFullName = draftFullName.trim();
+    const updatedProfile: UserProfile = {
+      ...user,
+      fullName: trimmedFullName || user.fullName,
+      classLevel: draftClassLevel || user.classLevel,
+    };
+
+    await handleUpdateUser(updatedProfile);
+    setIsEditModalOpen(false);
+    setNotificationMessage("Informations personnelles mises à jour.");
+  }, [draftClassLevel, draftFullName, handleUpdateUser, user]);
+
   const menuItems = [
     {
       icon: User,
       label: "Informations personnelles",
       value: user.fullName || "Non renseigné",
-      action: () => {},
+      action: () => setIsEditModalOpen(true),
     },
     {
       icon: Mail,
@@ -226,7 +304,7 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
       icon: BookOpen,
       label: "Classe",
       value: levelName,
-      action: () => {},
+      action: () => setIsEditModalOpen(true),
     },
     {
       icon: Bell,
@@ -248,24 +326,67 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
     },
   ];
 
+  if (shouldShowLoader) {
+    return <PremiumLoader message={"Chargement de votre espace mobile..."} />;
+  }
+
   return (
     <div className="space-y-6 pb-24 px-4 pt-4">
       {/* Header profil */}
       <div className="flex items-center gap-4">
-        <div className="h-16 w-16 rounded-full bg-gradient-to-tr from-emerald-600 to-sky-500 text-white flex items-center justify-center text-xl font-bold">
-          {user.fullName
-            ? user.fullName
-                .split(" ")
-                .map((n) => n[0])
-                .join("")
-                .slice(0, 2)
-                .toUpperCase()
-            : "ET"}
+        <div className="relative">
+          <div className="h-16 w-16 rounded-full bg-gradient-to-tr from-emerald-600 to-sky-500 text-white flex items-center justify-center text-xl font-bold overflow-hidden">
+            {avatarSrc ? (
+              <img
+                src={avatarSrc}
+                alt="Avatar"
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <span>
+                {user.fullName
+                  ? user.fullName
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                  : "ET"}
+              </span>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={handleAvatarUpload}
+            disabled={isUploadingAvatar}
+            className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-white text-emerald-600 border border-emerald-200 shadow-sm hover:bg-emerald-50 transition-colors disabled:cursor-not-allowed disabled:opacity-70"
+            title="Changer l'avatar"
+          >
+            {isUploadingAvatar ? (
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" />
+            ) : (
+              <Camera className="h-4 w-4" />
+            )}
+          </button>
+          <input
+            ref={avatarInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleAvatarFile}
+          />
         </div>
         <div>
-          <h1 className="text-lg font-bold text-gray-900 dark:text-white">
-            {user.fullName || "Étudiant"}
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg font-bold text-gray-900 dark:text-white">
+              {user.fullName || "Étudiant"}
+            </h1>
+            <button
+              type="button"
+              onClick={() => setIsEditModalOpen(true)}
+              className="rounded-full border border-gray-200 dark:border-slate-700 px-2 py-1 text-[11px] font-semibold text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800"
+            >
+              Modifier
+            </button>
+          </div>
           <p className="text-sm text-gray-500 dark:text-slate-400">
             {user.role === "admin" ? "Enseignant" : "Élève"} · {levelName}
           </p>
@@ -447,6 +568,72 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
         <LogOut className="h-4 w-4" />
         Déconnexion
       </button>
+
+      {/* Edit profile modal */}
+      {isEditModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-3xl bg-white dark:bg-slate-950 border border-gray-200 dark:border-slate-800 p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Modifier le profil</h2>
+                <p className="text-sm text-gray-500 dark:text-slate-400">Mets à jour ton nom et ta classe.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsEditModalOpen(false)}
+                className="text-gray-500 hover:text-gray-900 dark:hover:text-white"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300">
+                Nom complet
+              </label>
+              <input
+                value={draftFullName}
+                onChange={(event) => setDraftFullName(event.target.value)}
+                className="w-full rounded-2xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900 px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                placeholder="Ton nom complet"
+              />
+
+              <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300">
+                Classe
+              </label>
+              <select
+                value={draftClassLevel}
+                onChange={(event) => setDraftClassLevel(event.target.value)}
+                className="w-full rounded-2xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900 px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              >
+                <option value="">Sélectionne ta classe</option>
+                {db.levels.map((level) => (
+                  <option key={level.id} value={level.id}>
+                    {level.name}
+                  </option>
+                ))}
+              </select>
+
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="rounded-2xl border border-gray-200 dark:border-slate-700 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-slate-200"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveProfile}
+                  className="rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+                >
+                  Enregistrer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {/* Footer */}
       <div className="text-center pt-4">

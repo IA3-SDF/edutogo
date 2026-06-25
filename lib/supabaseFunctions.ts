@@ -1,18 +1,18 @@
 import {
-  Asset,
-  Chapter,
-  Course,
-  CourseSection,
-  DatabaseState,
-  Evaluation,
-  Exercise,
-  FavoriteRow,
-  Level,
-  QuizQuestion,
-  Subject,
-  UserFavorite,
-  UserNotification,
-  UserProfile,
+    Asset,
+    Chapter,
+    Course,
+    CourseSection,
+    DatabaseState,
+    Evaluation,
+    Exercise,
+    FavoriteRow,
+    Level,
+    QuizQuestion,
+    Subject,
+    UserFavorite,
+    UserNotification,
+    UserProfile,
 } from "../types";
 import { getSupabaseClient } from "./supabase";
 
@@ -368,6 +368,8 @@ export async function fetchUserNotifications(userId: string): Promise<UserNotifi
       message: item.message,
       isRead: item.is_read,
       createdAt: item.created_at,
+      resourceId: item.resource_id || undefined,
+      resourceType: item.resource_type || undefined,
     }));
   } catch (err) {
     console.error("[EduTogo] Erreur lors du chargement des notifications :", err);
