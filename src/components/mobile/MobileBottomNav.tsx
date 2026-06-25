@@ -9,7 +9,7 @@ import {
   User,
 } from "lucide-react";
 import React, { useState, useEffect } from "react"; // 1. Ajout de useState et useEffect
-
+//version de production
 export type MobileTab = "home" | "learn" | "library" | "activities" | "profile";
 
 interface MobileBottomNavProps {

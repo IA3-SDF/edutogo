@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getSupabaseClient } from "../../lib/supabase";
-
+//changement pour voir si vercel va changer
 // Basic hook to detect if Supabase client is available and a session exists.
 export function useSupabaseReady() {
   const [isReady, setIsReady] = useState(false);
